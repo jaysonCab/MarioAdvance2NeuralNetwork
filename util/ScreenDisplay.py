@@ -1,44 +1,43 @@
-import pyautogui
+import mss
 import pygetwindow as gw
-from PIL import Image
+from PIL import Image, ImageEnhance
 import time
 
 def get_window_region(title):
-    # Get the window object by title
-    window = gw.getWindowsWithTitle(title)
-    
-    if window:
-        # Assuming the first matching window is the one we want
-        win = window[0]
-        
-        # Get window position and size
-        left, top = win.left, win.top
-        width, height = win.width, win.height
-        
-        return (left, top, width, height)
+    windows = gw.getWindowsWithTitle(title)
+    if windows:
+        win = windows[0]
+        return {"top": win.top, "left": win.left, "width": win.width, "height": win.height}
     else:
         print(f"Window with title '{title}' not found.")
         return None
 
 def display_screen():
   
-  window_title = "Super Mario Advanced 2 - Super Mario World (U) [!] - VisualBoyAdvance-M 2.0.1"  # Replace with your window's title
+  window_title = "Super Mario Advance 2 - Super Mario World (U) [!] - VisualBoyAdvance-M 2.1.11"  # Replace with your window's title
   region = get_window_region(window_title)
 
   if region:
-    while True:
-      # Take a screenshot of the specific window region
-      screenshot = pyautogui.screenshot(region=region)
+    with mss.mss() as sct:
+      while True:
+        # Capture the window
+        screenshot = sct.grab(region)
 
-      # Convert the screenshot to grayscale
-      grayscale_image = screenshot.convert('L')
+        # Convert to grayscale and resize
+        image = Image.frombytes("RGB", screenshot.size, screenshot.rgb)
 
-      # Resize the image (e.g., to 84x84 or smaller)
-      resized_image = grayscale_image.resize((84, 84))
+        grayscale_image = image.convert("L")
+        resized_image = grayscale_image.resize((512, 405), Image.Resampling.LANCZOS)
 
-      # Optionally display the processed image
-      resized_image.show()
+        # Show the processed image
+        enhancer = ImageEnhance.Sharpness(resized_image)
+        sharpend_image = enhancer.enhance(2.0)
+      
+        sharpend_image.show()
 
-      # Small delay between screenshots
-      time.sleep(0.1)
+        # Delay to control frequency
+        time.sleep(0.1)
+  else:
+      print("Could not locate the specified window.")
+
   return
